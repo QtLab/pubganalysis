@@ -1,0 +1,117 @@
+---
+title: "Unsupervised Learning with PUBG"
+output: html_notebook
+---
+
+Start by importing the data and splitting it by game mode
+We need three data sets (1 for each game mode).
+```{r}
+raw <- read.csv("PUBG_Player_Statistics.csv", header = TRUE)
+solo_stats <- raw[,3:52]
+duo_stats <- raw[,c(53:102)]
+squad_stats <- raw[,c(103:152)]
+```
+
+Feature selection and clustering (SOLO)
+```{r}
+library(cluster)
+
+# Let's decide which features actually "describe a players playstyle"
+clean <- solo_stats
+clean <- clean[clean$solo_RoundsPlayed > 100,]
+
+# Let's look at players that are "like" in terms of total movement
+#clean <- clean[clean$solo_MoveDistancePg >= 2000 & clean$solo_MoveDistancePg <= 3000,]
+full  <- clean
+
+# Pick our features
+clean <- clean[,c(
+  "solo_AvgWalkDistance",
+  "solo_AvgRideDistance")]
+
+clean <- na.omit(clean)
+
+# Elbow method for picking k
+wssplot <- function(data, nc=15, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+
+wssplot(clean, nc=6)
+
+# Fit kmeans model
+k.means.fit <- kmeans(clean, centers = 2)
+
+# Save cluser relationships
+full$cluster <- k.means.fit$cluster
+d1 <- full[full$cluster == 1,]
+d2 <- full[full$cluster == 2,]
+
+# Plot Decision boundary
+par(bg = 'gray95')
+palette(c("blue","red"))
+plot(full$solo_AvgWalkDistance, full$solo_AvgRideDistance, 
+     pch = 19, col = full$cluster, xlab = "Average Walk Distance", ylab = "Average Ride Distance")
+legend(10000,10000, c('Prefer Walking','Prefer Vehicles'), pch=19, col=c('blue','red'))
+
+for(i in 1:50) {
+  boxplot(d1[,i], d2[,i], col = c('blue', 'red'), main = colnames(d1)[i], 
+          names = c("Prefer Walking", "Prefer Vehicles"))
+}
+```
+
+
+Geature selection and clustering (SQUAD)
+```{r}
+library(cluster)
+
+# Let's decide which features actually "describe a players playstyle"
+clean <- squad_stats
+clean <- clean[clean$squad_RoundsPlayed > 100,]
+
+# Let's look at players that are "like" in terms of total movement
+full  <- clean
+
+# Pick our features
+clean <- clean[,c(
+  "squad_AvgWalkDistance",
+  "squad_AvgRideDistance")]
+
+clean <- na.omit(clean)
+
+# Elbow method for picking k
+wssplot <- function(data, nc=15, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+
+wssplot(clean, nc=6)
+
+# Fit kmeans model
+k.means.fit <- kmeans(clean, centers = 2)
+
+# Save cluser relationships
+full$cluster <- k.means.fit$cluster
+d1 <- full[full$cluster == 1,]
+d2 <- full[full$cluster == 2,]
+
+# Plot Decision boundary
+par(bg = 'gray95')
+palette(c("blue","red"))
+plot(full$squad_AvgWalkDistance, full$squad_AvgRideDistance, 
+     pch = 19, col = full$cluster, xlab = "Average Walk Distance", ylab = "Average Ride Distance")
+legend(30000,6000, c('Prefer Walking','Prefer Vehicles'), pch=19, col=c('blue','red'))
+
+for(i in 1:50) {
+  boxplot(d1[,i], d2[,i], col = c('blue', 'red'), main = colnames(d1)[i], 
+          names = c("Prefer Walking", "Prefer Vehicles"))
+}
+```

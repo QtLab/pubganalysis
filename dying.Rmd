@@ -1,0 +1,85 @@
+---
+title: "PUBG and Dying"
+output: html_notebook
+---
+
+```{r}
+raw <- read.csv("PUBG_Player_Statistics.csv", header = TRUE)
+```
+
+```{r}
+
+# Rounds played
+rp <- raw[,c("solo_RoundsPlayed", "duo_RoundsPlayed", "squad_RoundsPlayed")]
+srp  <- sum(rp$solo_RoundsPlayed)
+drp  <- sum(rp$duo_RoundsPlayed)
+sqrp <- sum(rp$squad_RoundsPlayed)
+tab1 <- matrix(c(srp,drp,sqrp),ncol=3,byrow=TRUE)
+colnames(tab1) <- c("solo_played", "duo_played", "squad_played")
+options(scipen=1)
+barplot(tab1, names.arg = c("Solo", "Duo", "Squad"), col = "lightblue", main = "Rounds Played by Type")
+
+summary(raw$solo_Wins)
+summary(raw$duo_Wins)
+summary(raw$squad_Wins)
+
+best_wins <- raw[raw$squad_Wins == 379,]
+```
+
+Simple linear regression
+```{r}
+plot(squad_Losses ~ squad_RoundsPlayed, data = raw,
+     xlab = "Rounds Played",
+     ylab = "Rounds Lost",
+     main = "Rounds Played vs. Rounds Lost", col = "red", pch = 19
+)
+```
+
+A quick and dirty linear regression (caret)
+```{r}
+library(caret)
+set.seed(1234)
+model <- train(squad_Losses ~ squad_RoundsPlayed, data = raw, method = "lm")
+summary(model)
+coef.icept <- coef(model$finalModel)[1]
+coef.slope <- coef(model$finalModel)[2]
+ggplot(data = raw, aes(x = squad_RoundsPlayed, y = squad_Losses)) +
+  geom_point() +
+  geom_abline(slope = coef.slope, intercept = coef.icept, color = "red") +
+  labs(x = "Rounds Played", y = "Losses")
+```
+
+Machine learning to predict Losses
+```{r}
+library(caret)
+set.seed(99933)
+mldata <- raw[,
+              c("squad_KillDeathRatio",
+                "squad_TimeSurvived",
+                "squad_KillsPg",
+                "squad_MoveDistancePg",
+                "squad_Kills",
+                "squad_TeamKills",
+                "squad_AvgSurvivalTime",
+                "squad_AvgWalkDistance",
+                "squad_AvgRideDistance",
+                "squad_Losses")]
+
+# 80/20 split for data
+trainIndex <- createDataPartition(mldata$squad_Losses, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+data.train <- mldata[trainIndex,]
+data.test  <- mldata[-trainIndex,]
+
+ctrl <- trainControl(preProcOptions = c("center", "scale"))
+mlmodel <- train(squad_Losses ~ ., data = data.train, trControl = ctrl, method = "glm")
+#summary(mlmodel)
+#plot(varImp(mlmodel))
+
+# Predictions on test
+pred <- predict(mlmodel, newdata = data.test, type = "raw")
+rmse <- RMSE(pred, data.test$squad_Losses)
+paste("Test RMSE - ", rmse)
+```
+

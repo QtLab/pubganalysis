@@ -1,0 +1,46 @@
+---
+title: "Vehicles"
+output: html_notebook
+---
+
+Import the data, do any manipulations we need
+```{r}
+raw <- read.csv("PUBG_Player_Statistics.csv", header = T)
+```
+
+Does spending more time in a vehicle make you a better player?
+Do the best players spend more time in vehicles?
+```{r}
+plot(raw$solo_AvgRideDistance, raw$solo_Wins, xlab = "Average Ride Distance (meters)",
+     ylab = "Number of Wins", main = "Avg. Ride Distance vs. Number of Wins (Solo)", col = "lightblue", pch = 19)
+
+plot(raw$duo_AvgRideDistance, raw$duo_Wins, xlab = "Average Ride Distance (meters)",
+     ylab = "Number of Wins", main = "Avg. Ride Distance vs. Number of Wins (Duo)", col = "red", pch = 19)
+
+plot(raw$squad_AvgRideDistance, raw$squad_Wins, xlab = "Average Ride Distance (meters)",
+     ylab = "Number of Wins", main = "Avg. Ride Distance vs. Number of Wins (Squad)", col = "lightgreen", pch = 19)
+
+summary(raw$solo_AvgRideDistance)
+summary(raw$duo_AvgRideDistance)
+summary(raw$squad_AvgRideDistance)
+```
+
+
+Does vehicle usage change over time? Do more experience players use vehicles less?
+```{r}
+plot(raw$solo_RoundsPlayed, raw$solo_AvgRideDistance, xlab = "Rounds Played", ylab = "Average Ride Distance (meters)",
+     main = "Avg. Ride Distance vs. Experience (Rounds Played) - Solo", col = "lightblue", pch = 19)
+
+plot(raw$duo_RoundsPlayed, raw$duo_AvgRideDistance, xlab = "Rounds Played", ylab = "Average Ride Distance (meters)",
+     main = "Avg. Ride Distance vs. Experience (Rounds Played) - Duo", col = "red", pch = 19)
+
+plot(raw$squad_RoundsPlayed, raw$squad_AvgRideDistance, xlab = "Rounds Played", ylab = "Average Ride Distance (meters)",
+     main = "Avg. Ride Distance vs. Experience (Rounds Played) - Squad", col = "lightgreen", pch = 19)
+```
+
+Killing and vehicles
+```{r}
+summary(raw$solo_RoadKillsPg)
+plot(raw$solo_RoundsPlayed, raw$solo_DamageDealt)
+```
+

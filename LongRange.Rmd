@@ -1,0 +1,61 @@
+---
+title: "Long Range / Sniper Analysis"
+output: html_notebook
+---
+
+Start by importing our raw data.
+```{r}
+raw <- read.csv("PUBG_Player_Statistics.csv", header = T)
+
+# Replace buggy/large values with missing points (> 1500 meters)
+raw$solo_LongestKill <- ifelse(raw$solo_LongestKill <= 1500, raw$solo_LongestKill, NA)
+raw$duo_LongestKill <- ifelse(raw$duo_LongestKill <= 1500, raw$duo_LongestKill, NA)
+raw$squad_LongestKill <- ifelse(raw$squad_LongestKill <= 1500, raw$squad_LongestKill, NA)
+
+```
+Start by examining some basic longest kill statistics
+```{r}
+ss  <- summary(raw$solo_LongestKill)
+ds  <- summary(raw$duo_LongestKill)
+sqs <- summary(raw$squad_LongestKill)
+#View(as.matrix(ss))
+#View(as.matrix(ds))
+#View(as.matrix(sqs))
+```
+
+Plots
+```{r}
+hist(raw$solo_LongestKill, xlab = 'Distance (meters)', 
+     col = "lightblue", main = "Solo Long Distance Kills")
+
+library(reshape2)
+library(ggplot2)
+lk <- raw[,c('solo_LongestKill', 'duo_LongestKill', 'squad_LongestKill')]
+
+gg <- melt(lk)
+ggplot(gg, aes(x=value, fill=variable)) +
+  geom_histogram(binwidth=10)+
+  facet_grid(variable~.)
+```
+
+Other variables
+```{r}
+plot(raw$solo_LongestKill, raw$solo_MoveDistancePg, 
+     xlab = "Longest Kill Distance (meters)", 
+     ylab = "Move Distance Per Game (meters)",
+     main = "Longest Kill vs. Move Distance Per Game (Solo)", col = "slategray3"
+     )
+
+plot(raw$duo_LongestKill, raw$duo_MoveDistancePg, 
+     xlab = "Longest Kill Distance (meters)", 
+     ylab = "Move Distance Per Game (meters)",
+     main = "Longest Kill vs. Move Distance Per Game (Duo)", col = "tan"
+     )
+
+plot(raw$squad_LongestKill, raw$squad_MoveDistancePg, 
+     xlab = "Longest Kill Distance (meters)", 
+     ylab = "Move Distance Per Game (meters)",
+     main = "Longest Kill vs. Move Distance Per Game (Squad)", col = "tomato"
+     )
+```
+
